@@ -1,4 +1,4 @@
-target=bin/fakems
+target=bin/fakems bin/raw2ms
 
 all:$(target)
 
@@ -10,6 +10,12 @@ bin/fakems:obj/fakems.o
 	mkdir -p bin&&g++ -o $@ obj/fakems.o $(LDFLAGS) -g
 
 obj/fakems.o:src/fakems.cc
+	mkdir -p obj&&g++ -c $<  $(CXXFLAGS) $(INC) -g -o $@
+
+bin/raw2ms:obj/raw2ms.o
+	mkdir -p bin&&g++ -o $@ obj/raw2ms.o $(LDFLAGS) -g
+
+obj/raw2ms.o:src/raw2ms.cc
 	mkdir -p obj&&g++ -c $<  $(CXXFLAGS) $(INC) -g -o $@
 
 clean:
