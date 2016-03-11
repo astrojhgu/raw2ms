@@ -3,7 +3,7 @@ target=bin/fakems bin/raw2ms
 all:$(target)
 
 INC=-I ../mscreate/include -I /usr/local/include/casacore/
-CXXFLAGS=-O3
+CXXFLAGS=-O3 -std=c++11
 LDFLAGS=-L ../mscreate/lib -lmscreate -lcasa_casa -lcasa_ms -lcasa_measures -lcasa_tables 
 
 bin/fakems:obj/fakems.o

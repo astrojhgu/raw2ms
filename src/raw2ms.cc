@@ -28,6 +28,60 @@ const int ch_min=0;
 const double RA=0;
 const double Dec=pi/2;
 const bool writeAutoCorr=false;
+const int nchannels=8192;
+struct data_flag_pair
+{
+  casa::Array<casa::Complex> data;
+  casa::Array<casa::Bool> flag;
+};
+
+class VisbByBaselineSource
+  :public RawDataSource
+{
+private:
+  std::vector<shared_ptr<ifstream> > files;
+  std::vector<std::pair<int,int> > baseline_nodes;
+  std::vector<std::vector<data_flag_pair> > data_buffer;
+  std::vector<std::pair<int,int> > chlimits;
+  std::ifstream time_file;
+public:
+  VisbByBaselineSource(const std::vector<std::string>& antenna_names,
+		       const std::string& data_path,
+		       const std::string& date,
+		       const std::vector<std::pair<int,int> >& _chlimits)
+    :RawDataSource(antenna_names.size()*(antenna_names.size()+1)/2),chlimits(_chlimits),time_file(data_path+"/time-0-"+date+".txt")
+  {
+    assert(time_file.is_open());
+    int nantennas=antenna_names.size();
+    int nbl=nantennas*(nantennas+1)/2;
+    for(int i=0;i<nantennas;++i)
+      {
+	for(int j=i;j<nantennas;++j)
+	  {
+	    baseline_nodes.push_back({i,j});
+	    files.push_back(std::shared_ptr<std::ifstream>(new ifstream(data_path+"/"+antenna_names[i]+antenna_names[j]+"-0-"+date+".bin")));
+	    assert(files.back()->is_open());
+	  }
+      }
+    for(int i=0;i<chlimits.size();++i)
+      {
+	IPosition data_shape(2,1,chlimits[i].second-chlimits[i].first);
+	std::vector<data_flag_pair> d(nbl);
+	for(int j=0;j<nbl;++j)
+	  {
+	    d[j].data.resize(data_shape);
+	    d[j].flag.resize(data_shape);
+	  }
+	data_buffer.push_back(d);
+      }
+  }
+
+  bool doFetchOne()override
+  {
+    std::vector<float> df(nchannels*2);
+    
+  }
+};
 
 std::pair<int,int> parse_ch(const std::string& s)
 {
@@ -50,19 +104,22 @@ int main (int argc, char** argv)
 {
   if(argc<6)
     {
-      std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <out name> <time file> <visb by bl prefix> <ch1:ch2> [ch3:ch4] [ch5:ch6]..."<<std::endl;
+      std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <out name> <date> <input path> <ch1:ch2> [ch3:ch4] [ch5:ch6]..."<<std::endl;
       return -1;
     }
   std::string antennaTabName(argv[1]);
   std::string outName(argv[2]);
-  std::string timeFile(argv[3]);
-  std::string visbPrefix(argv[4]);
+  std::string date(argv[3]);
+  std::string input_path(argv[4]);
 
   for(int i=5;i<argc;++i)
     {
       std::string chs(argv[i]);
       std::pair<int,int> chlimits=parse_ch(chs);
+      assert(chlimits.first<chlimits.second);
+      assert(chlimits.first>=2048&&chlimits.second<8192);
     }
+  
   
   
   return 0;
