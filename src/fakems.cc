@@ -54,7 +54,7 @@ public:
     :RawDataSource(780),t0(0),t(0)
   {
     Quantity qn;
-    MVTime::read (qn, "2016/03/03 00:00:00", true);
+    MVTime::read (qn, "2016/02/03 00:00:00", true);
     t=qn.getValue ("s");
     t0=t;
     for(int i=0;i<39;++i)
@@ -199,7 +199,7 @@ int main (int argc, char** argv)
 
   
   Quantity qn;
-  assert(MVTime::read (qn, "2016/03/03 00:00:00", true));
+  assert(MVTime::read (qn, "2016/02/03 00:00:00", true));
   itsStartTime = qn.getValue ("s");
   
   doOne(0,itsMsName);
