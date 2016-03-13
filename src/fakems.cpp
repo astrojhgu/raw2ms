@@ -87,6 +87,7 @@ public:
 
   casa::Array<casa::Complex> doData(int field,int band,int bl)const
   {
+    cout<<"bl"<<endl;
     assert(band>=0&&band<itsNBand);
     int n=itsNFreq[band];
     IPosition shape(2,1,n);
