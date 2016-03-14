@@ -213,7 +213,8 @@ int main (int argc, char** argv)
       int ch_lower=chlimits[i].first;
       int ch_upper=chlimits[i].second;
       int nch=ch_upper-ch_lower;
-      double fref=ch_lower*freq_per_ch+freq_per_ch/2.0;
+      //double fref=ch_lower*freq_per_ch+freq_per_ch/2.0;
+      double fref=(ch_lower+ch_upper)/2.0*freq_per_ch;
       msmaker.addBand(nch,fref,freq_per_ch);
     }
 
