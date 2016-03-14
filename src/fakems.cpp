@@ -1,4 +1,4 @@
-#include <MSCreate.h>
+#include <mscreate.hpp>
 #include <casa/Quanta/MVTime.h>
 #include <casa/Quanta/MVAngle.h>
 #include <casa/Quanta/Quantum.h>
@@ -20,38 +20,38 @@ using namespace casa;
 using namespace std;
 
 // Define the variables shared between the functions.
-Table itsAntTab("ANTENNA", TableLock(TableLock::AutoNoReadLocking));
-vector<double> itsRa;
-vector<double> itsDec;
-Array<double>  itsAntPos;
-bool   itsWriteAutoCorr;
+Table its_ant_tab("ANTENNA", TableLock(TableLock::AutoNoReadLocking));
+vector<double> its_ra;
+vector<double> its_dec;
+Array<double>  its_ant_pos;
+bool   its_write_auto_corr;
 //bool   itsWriteImagerCol;
-int    itsNPart;
-int    itsNBand;
-int    itsNFreq[]={16,32,64};
-int    itsTileSizeFreq=-1;
-int    itsTileSizeRest=-1;
-int    itsNFlags=8;
-vector<double> itsStartFreq;
-vector<double> itsStepFreq;
-double itsStartTime;
-double itsEndTime;
-string itsMsName="obs.MS";
-string itsFlagColumn="flag";
+int    its_nparts;
+int    its_nbands;
+int    its_nfreqs[]={16,32,64};
+int    its_tile_size_freq=-1;
+int    its_tile_size_rest=-1;
+int    its_nflags=8;
+vector<double> its_start_freq;
+vector<double> its_step_freq;
+double its_start_time;
+double its_end_time;
+string its_ms_name="obs.MS";
+string its_flag_column="flag";
 
 
 
 
-class FakeDataSource
-  :public RawDataSource
+class fake_data_source
+  :public raw_data_source
 {
 private:
   double t0;
   double t;
   std::vector<std::pair<int,int> > bl;
 public:
-  FakeDataSource()
-    :RawDataSource(780),t0(0),t(0)
+  fake_data_source()
+    :raw_data_source(780),t0(0),t(0)
   {
     Quantity qn;
     MVTime::read (qn, "2016/02/03 00:00:00", true);
@@ -67,7 +67,7 @@ public:
     
   }
 
-  bool doFetchOne()
+  bool do_fetch_one()
   {
     t+=3;
     if(t-t0>3600)
@@ -80,33 +80,33 @@ public:
       }
   }
 
-  std::pair<int,int> doAntennaPair(int b)const
+  std::pair<int,int> do_antenna_pair(int b)const
   {
     return bl[b];
   }
 
-  casa::Array<casa::Complex> doData(int field,int band,int bl)const
+  casa::Array<casa::Complex> do_data(int field,int band,int bl)const
   {
-    cout<<"bl"<<endl;
-    assert(band>=0&&band<itsNBand);
-    int n=itsNFreq[band];
+    //cout<<"bl"<<endl;
+    assert(band>=0&&band<its_nbands);
+    int n=its_nfreqs[band];
     IPosition shape(2,1,n);
     Array<Complex> d(shape);
     d=Complex(1,1);
     return d;
   }
 
-  casa::Array<casa::Bool> doFlags(int field,int band,int bl)const
+  casa::Array<casa::Bool> do_flags(int field,int band,int bl)const
   {
-    assert(band>=0&&band<itsNBand);
-    int n=itsNFreq[band];
+    assert(band>=0&&band<its_nbands);
+    int n=its_nfreqs[band];
     IPosition shape(2,1,n);
     Array<Bool> d(shape);
     d=false;
     return d;
   }
 
-  double doTime()const
+  double do_time()const
   {
     return t;
   }
@@ -118,51 +118,51 @@ public:
 
 
 
-void createMS (int nband, int bandnr, const string& msName)
+void createms (int nband, int bandnr, const string& ms_name)
 {
-  //int nfpb = itsNFreq/itsNBand;
-  MSCreate msmaker(msName, itsStartTime, 1,
-                   itsAntTab, itsWriteAutoCorr,
-		   itsFlagColumn, itsNFlags);
+  //int nfpb = its_nfreqs/its_nbands;
+  mscreate msmaker(ms_name, its_start_time, 1,
+                   its_ant_tab, its_write_auto_corr,
+		   its_flag_column, its_nflags);
   for (int i=0; i<nband; ++i) {
     // Determine middle of band.
     
-    double freqRef = itsStartFreq[bandnr] + itsNFreq[i]*itsStepFreq[bandnr]/2;
-    msmaker.addBand (itsNFreq[i], freqRef, itsStepFreq[bandnr]);
+    double freq_ref = its_start_freq[bandnr] + its_nfreqs[i]*its_step_freq[bandnr]/2;
+    msmaker.add_band (its_nfreqs[i], freq_ref, its_step_freq[bandnr]);
     ++bandnr;
   }
-  for (uint i=0; i<itsRa.size(); ++i) {
-    msmaker.addField (itsRa[i], itsDec[i]);
+  for (uint i=0; i<its_ra.size(); ++i) {
+    msmaker.add_field (its_ra[i], its_dec[i]);
   }
   //for (int i=0; i<itsNTime; ++i) {
-  for(;fds.fetchOne();)
+  for(;fds.fetch_one();)
     {
       std::cerr<<setprecision(20);
       //std::cerr<<t<<std::endl;
-      msmaker.writeTimeStep(fds);
+      msmaker.write_time_step(fds);
     }
 }
 
-void doOne (int seqnr, const string& msName)
+void do_one (int seqnr, const string& ms_name)
 {
-  int nbpp = itsNBand / itsNPart;
+  int nbpp = its_nbands / its_nparts;
   // Form the MS name.
   // If it contains %d, use that to fill in the seqnr.
   // Otherwise append _seqnr to the name.
-  string name=msName;
-  //if (msName.find ("%d") != string::npos) {
-  //name = formatString (msName.c_str(), seqnr);
+  string name=ms_name;
+  //if (ms_name.find ("%d") != string::npos) {
+  //name = formatString (ms_name.c_str(), seqnr);
   //} else {
-  //name = msName + toString (seqnr, "_p%d");
+  //name = ms_name + toString (seqnr, "_p%d");
     //}
   // Create the MS.
-  createMS (itsNBand, seqnr*nbpp, name);
+  createms (its_nbands, seqnr*nbpp, name);
 }
 
 void doAll()
 {
-  for (int i=0; i<itsNPart; ++i) {
-    doOne (i, itsMsName);
+  for (int i=0; i<its_nparts; ++i) {
+    do_one (i, its_ms_name);
   }
 
 }
@@ -172,38 +172,38 @@ int main (int argc, char** argv)
 {
   //doAll();
   const double pi=3.1415926;
-  itsRa.push_back(0);
-  itsDec.push_back(pi/2.);
+  its_ra.push_back(0);
+  its_dec.push_back(pi/2.);
   
   
   //ROArrayColumn<double> posCol(tab, "POSITION");
-  //itsAntPos = posCol.getColumn();
+  //its_ant_pos = posCol.getColumn();
 
-  //cout<<itsAntPos.shape()[0]<<endl;
-  //cout<<itsAntPos.shape()[1]<<endl;
-  itsWriteAutoCorr=false;
+  //cout<<its_ant_pos.shape()[0]<<endl;
+  //cout<<its_ant_pos.shape()[1]<<endl;
+  its_write_auto_corr=false;
   
 
-  itsNPart=1;
-  itsNBand=3;
+  its_nparts=1;
+  its_nbands=3;
   
     
-  itsNPart=1;
-  //doOne(1,"aa.MS");
+  its_nparts=1;
+  //do_one(1,"aa.MS");
 
 
-  for(int i=0;i<itsNBand;++i)
+  for(int i=0;i<its_nbands;++i)
     {
-      itsStartFreq.push_back(50E6+i*10E6);
-      itsStepFreq.push_back(200e6/8192);
+      its_start_freq.push_back(50E6+i*10E6);
+      its_step_freq.push_back(200e6/8192);
     }
 
   
   Quantity qn;
   assert(MVTime::read (qn, "2016/02/03 00:00:00", true));
-  itsStartTime = qn.getValue ("s");
+  its_start_time = qn.getValue ("s");
   
-  doOne(0,itsMsName);
+  do_one(0,its_ms_name);
   
   return 0;
 }

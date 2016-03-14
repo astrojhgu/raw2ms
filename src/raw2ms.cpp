@@ -1,4 +1,4 @@
-#include <MSCreate.h>
+#include <mscreate.hpp>
 #include <casa/Quanta/MVTime.h>
 #include <casa/Quanta/MVAngle.h>
 #include <casa/Quanta/Quantum.h>
@@ -37,8 +37,8 @@ struct data_flag_pair
   casa::Array<casa::Bool> flag;
 };
 
-class VisbByBaselineSource
-  :public RawDataSource
+class visb_by_baseline_source
+  :public raw_data_source
 {
 private:
   std::vector<shared_ptr<ifstream> > files;
@@ -49,11 +49,11 @@ private:
   double current_time;
   double start_time;
 public:
-  VisbByBaselineSource(const std::vector<std::string>& antenna_names,
+  visb_by_baseline_source(const std::vector<std::string>& antenna_names,
 		       const std::string& data_path,
 		       const std::string& date,
 		       const std::vector<std::pair<int,int> >& _chlimits)
-    :RawDataSource(antenna_names.size()*(antenna_names.size()+1)/2),chlimits(_chlimits),time_file(data_path+"/time-0-"+date+".txt"),current_time(0)
+    :raw_data_source(antenna_names.size()*(antenna_names.size()+1)/2),chlimits(_chlimits),time_file(data_path+"/time-0-"+date+".txt"),current_time(0)
   {
     assert(time_file.is_open());
     ifstream ifs_time_tmp(data_path+"/time-0-"+date+".txt");
@@ -86,12 +86,12 @@ public:
       }
   }
 
-  double getStartTime()const
+  double get_start_time()const
   {
     return start_time;
   }
 
-  bool doFetchOne()override
+  bool do_fetch_one()override
   {
     std::vector<float> df(nchannels*2);
     std::string time_line;
@@ -131,22 +131,22 @@ public:
     return true;
   }
 
-  std::pair<int,int> doAntennaPair(int bl)const
+  std::pair<int,int> do_antenna_pair(int bl)const
   {
     return baseline_nodes.at(bl);
   }
 
-  casa::Array<casa::Complex> doData(int field,int band,int bl)const
+  casa::Array<casa::Complex> do_data(int field,int band,int bl)const
   {
     return data_buffer.at(band).at(bl).data;
   }
 
-  casa::Array<casa::Bool> doFlags(int field,int band,int bl)const
+  casa::Array<casa::Bool> do_flags(int field,int band,int bl)const
   {
     return data_buffer.at(band).at(bl).flag;
   }
 
-  double doTime()const
+  double do_time()const
   {
     return current_time;
   }
@@ -176,8 +176,8 @@ int main (int argc, char** argv)
       std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <out name> <date> <input path> <ch1:ch2> [ch3:ch4] [ch5:ch6]..."<<std::endl;
       return -1;
     }
-  std::string antennaTabName(argv[1]);
-  std::string outName(argv[2]);
+  std::string antenna_tab_name(argv[1]);
+  std::string out_name(argv[2]);
   std::string date(argv[3]);
   std::string input_path(argv[4]);
 
@@ -190,8 +190,8 @@ int main (int argc, char** argv)
       assert(chlimits.back().first>=2048&&chlimits.back().second<=8192);
     }
   
-  Table antTab(antennaTabName, TableLock(TableLock::AutoNoReadLocking));
-  ROScalarColumn<String> antNameCol(antTab,"NAME");
+  Table ant_tab(antenna_tab_name, TableLock(TableLock::AutoNoReadLocking));
+  ROScalarColumn<String> antNameCol(ant_tab,"NAME");
   Array<String> antNames(antNameCol.getColumn());
   std::vector<std::string> antNameVec;
   
@@ -201,13 +201,13 @@ int main (int argc, char** argv)
       std::cout<<antNameVec.back()<<std::endl;
     }
 
-  VisbByBaselineSource vbs(antNameVec,
+  visb_by_baseline_source vbs(antNameVec,
 			   input_path,
 			   date,
 			   chlimits);
 
   
-  MSCreate msmaker(outName, vbs.getStartTime(), 1,  antTab, true, "flag", 8);
+  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, true, "flag", 8);
   for(int i=0;i<chlimits.size();++i)
     {
       int ch_lower=chlimits[i].first;
@@ -215,21 +215,21 @@ int main (int argc, char** argv)
       int nch=ch_upper-ch_lower;
       //double fref=ch_lower*freq_per_ch+freq_per_ch/2.0;
       double fref=(ch_lower+ch_upper)/2.0*freq_per_ch;
-      msmaker.addBand(nch,fref,freq_per_ch);
+      msmaker.add_band(nch,fref,freq_per_ch);
     }
 
-  msmaker.addField(0.0,pi/2);
+  msmaker.add_field(0.0,pi/2);
 
   for(int i=0;;++i)
     {
       cout<<"reading..."<<endl;
-      if(!vbs.fetchOne())
+      if(!vbs.fetch_one())
 	{
 	  break;
 	}
       cout<<i<<endl;
       cout<<"writing"<<endl;
-      msmaker.writeTimeStep(vbs);
+      msmaker.write_time_step(vbs);
     }
   
   return 0;
