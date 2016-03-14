@@ -106,6 +106,7 @@ public:
     for(int i=0;i<files.size();++i)
       {
 	files[i]->read((char*)(df.data()),nchannels*2*sizeof(float));
+	assert(files[i]->good());
 	for(int j=0;j<chlimits.size();++j)
 	  {
 	    int ch_lower,ch_upper;
