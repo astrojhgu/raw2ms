@@ -9,6 +9,8 @@
 #include <tables/Tables/Table.h>
 #include <tables/Tables/ScalarColumn.h>
 #include <tables/Tables/ArrayColumn.h>
+#include <casa/Quanta/MVPosition.h>
+#include <measures/Measures/MPosition.h>
 #include <cassert>
 #include <string>
 #include <iostream>
@@ -192,6 +194,24 @@ int main (int argc, char** argv)
     }
   
   Table ant_tab(antenna_tab_name, TableLock(TableLock::AutoNoReadLocking));
+
+  ROArrayColumn<double> pos_col(ant_tab, "POSITION");
+  Array<double> its_ant_pos(pos_col.getColumn());
+  Matrix<double> ant_pos(its_ant_pos);
+  double mx(0),my(0),mz(0);
+  for(int i=0;i<its_ant_pos.shape()[1];++i)
+    {
+      mx+=ant_pos(0,i);
+      my+=ant_pos(1,i);
+      mz+=ant_pos(2,i);
+    }
+  mx/=its_ant_pos.shape()[1];
+  my/=its_ant_pos.shape()[1];
+  mz/=its_ant_pos.shape()[1];
+  
+  casa::MPosition array_pos(casa::MVPosition(mx,my,mz),MPosition::ITRF);
+
+  
   ROScalarColumn<String> antNameCol(ant_tab,"NAME");
   Array<String> antNames(antNameCol.getColumn());
   std::vector<std::string> antNameVec;
@@ -216,7 +236,7 @@ int main (int argc, char** argv)
       int ch_upper=chlimits[i].second;
 
       std::string out_name=out_prefix+std::to_string(ch_lower)+":"+std::to_string(ch_upper)+".MS";
-      auto p=std::shared_ptr<mscreate>(new mscreate(out_name,vbs.get_start_time(),1,ant_tab,true,"flag",8));
+      auto p=std::shared_ptr<mscreate>(new mscreate(out_name,vbs.get_start_time(),1,ant_tab,array_pos,true,"flag",8));
       
       msmakers.push_back(p);
       int nch=ch_upper-ch_lower;

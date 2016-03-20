@@ -6,6 +6,8 @@
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/Vector.h>
 #include <casa/OS/Path.h>
+#include <casa/Quanta/MVPosition.h>
+#include <measures/Measures/MPosition.h>
 #include <tables/Tables/Table.h>
 #include <tables/Tables/ScalarColumn.h>
 #include <tables/Tables/ArrayColumn.h>
@@ -206,8 +208,22 @@ int main (int argc, char** argv)
 			   date,
 			   chlimits);
 
+  ROArrayColumn<double> pos_col(ant_tab, "POSITION");
+  Array<double> its_ant_pos(pos_col.getColumn());
+  Matrix<double> ant_pos(its_ant_pos);
+  double mx(0),my(0),mz(0);
+  for(int i=0;i<its_ant_pos.shape()[1];++i)
+    {
+      mx+=ant_pos(0,i);
+      my+=ant_pos(1,i);
+      mz+=ant_pos(2,i);
+    }
+  mx/=its_ant_pos.shape()[1];
+  my/=its_ant_pos.shape()[1];
+  mz/=its_ant_pos.shape()[1];
   
-  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, true, "flag", 8);
+  
+  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF),true, "flag", 8);
   for(int i=0;i<chlimits.size();++i)
     {
       int ch_lower=chlimits[i].first;

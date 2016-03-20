@@ -6,6 +6,8 @@
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/Vector.h>
 #include <casa/OS/Path.h>
+#include <casa/Quanta/MVPosition.h>
+#include <measures/Measures/MPosition.h>
 #include <tables/Tables/Table.h>
 #include <tables/Tables/ScalarColumn.h>
 #include <tables/Tables/ArrayColumn.h>
@@ -121,8 +123,26 @@ public:
 void createms (int nband, int bandnr, const string& ms_name)
 {
   //int nfpb = its_nfreqs/its_nbands;
+  
+  ROArrayColumn<double> pos_col(its_ant_tab, "POSITION");
+  Array<double> its_ant_pos(pos_col.getColumn());
+  Matrix<double> ant_pos(its_ant_pos);
+  double mx(0),my(0),mz(0);
+  for(int i=0;i<its_ant_pos.shape()[1];++i)
+    {
+      mx+=ant_pos(0,i);
+      my+=ant_pos(1,i);
+      mz+=ant_pos(2,i);
+    }
+  mx/=its_ant_pos.shape()[1];
+  my/=its_ant_pos.shape()[1];
+  mz/=its_ant_pos.shape()[1];
+  
+  
   mscreate msmaker(ms_name, its_start_time, 1,
-                   its_ant_tab, its_write_auto_corr,
+                   its_ant_tab,
+		   casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF),
+		   its_write_auto_corr,
 		   its_flag_column, its_nflags);
   for (int i=0; i<nband; ++i) {
     // Determine middle of band.
