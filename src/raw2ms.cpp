@@ -223,7 +223,7 @@ int main (int argc, char** argv)
   mz/=its_ant_pos.shape()[1];
   
   
-  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF),true, "flag", 8);
+  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF),true);
   for(int i=0;i<chlimits.size();++i)
     {
       int ch_lower=chlimits[i].first;

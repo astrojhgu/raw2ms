@@ -39,7 +39,7 @@ vector<double> its_step_freq;
 double its_start_time;
 double its_end_time;
 string its_ms_name="obs.MS";
-string its_flag_column="flag";
+
 
 
 
@@ -137,13 +137,14 @@ void createms (int nband, int bandnr, const string& ms_name)
   mx/=its_ant_pos.shape()[1];
   my/=its_ant_pos.shape()[1];
   mz/=its_ant_pos.shape()[1];
-  
+  mx=ant_pos(0,0);
+  my=ant_pos(1,0);
+  my=ant_pos(2,0);
   
   mscreate msmaker(ms_name, its_start_time, 1,
                    its_ant_tab,
 		   casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF),
-		   its_write_auto_corr,
-		   its_flag_column, its_nflags);
+		   its_write_auto_corr);
   for (int i=0; i<nband; ++i) {
     // Determine middle of band.
     

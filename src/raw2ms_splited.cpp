@@ -236,7 +236,7 @@ int main (int argc, char** argv)
       int ch_upper=chlimits[i].second;
 
       std::string out_name=out_prefix+std::to_string(ch_lower)+":"+std::to_string(ch_upper)+".MS";
-      auto p=std::shared_ptr<mscreate>(new mscreate(out_name,vbs.get_start_time(),1,ant_tab,array_pos,true,"flag",8));
+      auto p=std::shared_ptr<mscreate>(new mscreate(out_name,vbs.get_start_time(),1,ant_tab,array_pos,true));
       
       msmakers.push_back(p);
       int nch=ch_upper-ch_lower;
