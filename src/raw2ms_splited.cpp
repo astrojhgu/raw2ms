@@ -147,7 +147,7 @@ public:
 
   casa::Array<casa::Float> do_sigma(int field,int band,int bl)const
   {
-    IPosition data_shape(data_buffer[band][bl].data.shape());
+    IPosition data_shape(1,1);
     casa::Array<Float> sigma(data_shape);
     auto p=do_antenna_pair(bl);
     if(p.first==p.second)

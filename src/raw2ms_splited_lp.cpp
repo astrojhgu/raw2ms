@@ -153,7 +153,7 @@ public:
 
   casa::Array<casa::Float> do_sigma(int field,int band,int bl)const
   {
-    IPosition data_shape(data_buffer[band][bl].data.shape());
+    IPosition data_shape(1,1);
     casa::Array<Float> sigma(data_shape);
     auto p=do_antenna_pair(bl);
     if(p.first==p.second)
@@ -251,6 +251,7 @@ int main (int argc, char** argv)
 	{
 	  break;
 	}
+      cerr<<ant<<" "<<dl<<endl;
       ant_delay[ant]=dl;
     }
   std::vector<double> delay_vec;
@@ -278,7 +279,7 @@ int main (int argc, char** argv)
       int ch_lower=chlimits[i].first;
       int ch_upper=chlimits[i].second;
 
-      std::string out_name=out_prefix+std::to_string(ch_lower)+":"+std::to_string(ch_upper)+".MS";
+      std::string out_name=out_prefix+std::to_string(ch_lower)+"-"+std::to_string(ch_upper)+".MS";
       auto p=std::shared_ptr<mscreate>(new mscreate(out_name,vbs.get_start_time(),1,ant_tab,array_pos,true));
       
       msmakers.push_back(p);
