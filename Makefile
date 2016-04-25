@@ -1,4 +1,4 @@
-target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/test_date_str
+target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/raw2ms_splited_lp bin/test_date_str
 
 all:$(target)
 
@@ -22,6 +22,12 @@ bin/raw2ms_splited:obj/raw2ms_splited.o obj/date_time.o
 	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
 
 obj/raw2ms_splited.o:src/raw2ms_splited.cpp
+	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
+
+bin/raw2ms_splited_lp:obj/raw2ms_splited_lp.o obj/date_time.o
+	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
+
+obj/raw2ms_splited_lp.o:src/raw2ms_splited_lp.cpp
 	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
 
 bin/test_date_str:obj/test_date_str.o obj/date_time.o
