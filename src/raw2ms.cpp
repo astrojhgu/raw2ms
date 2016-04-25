@@ -25,6 +25,7 @@ using namespace std;
 
 const double c=2.99792458E8;//m/s
 const double freq_per_ch=200E6/8192.0;
+const double dt=3.2;
 const double pi=atan(1)*4;
 const int ch_max=8191;
 const int ch_min=0;
@@ -141,6 +142,23 @@ public:
   casa::Array<casa::Complex> do_data(int field,int band,int bl)const
   {
     return data_buffer.at(band).at(bl).data;
+  }
+
+  casa::Array<casa::Float> do_sigma(int field,int band,int bl)const
+  {
+    IPosition data_shape(data_buffer[band][bl].data.shape());
+    casa::Array<Float> sigma(data_shape);
+    auto p=do_antenna_pair(bl);
+    if(p.first==p.second)
+      {
+	sigma=1/std::sqrt(freq_per_ch*dt);
+      }
+    else
+      {
+	sigma=1/std::sqrt(2*freq_per_ch*dt);
+      }
+	  
+    return sigma;
   }
 
   casa::Array<casa::Bool> do_flags(int field,int band,int bl)const
