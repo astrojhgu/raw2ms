@@ -98,6 +98,16 @@ public:
     return d;
   }
 
+  casa::Array<casa::Float> do_sigma(int, int, int) const override
+  {
+    casa::IPosition shape(1,1);
+    casa::Array<casa::Float> sigma(shape);
+    const double dk=24e3;
+    const double dt=3.2;
+    sigma=1/std::sqrt(dk*dt);
+    return sigma;
+  }
+
   casa::Array<casa::Bool> do_flags(int field,int band,int bl)const
   {
     assert(band>=0&&band<its_nbands);
