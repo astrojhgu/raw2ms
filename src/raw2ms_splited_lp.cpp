@@ -100,7 +100,7 @@ public:
 
   bool do_fetch_one()override
   {
-    std::vector<float> df(nchannels*2);
+    std::vector<std::complex<float> > df(nchannels);
     std::string time_line;
     std::getline(time_file,time_line);
     if(!time_file.good())
@@ -125,9 +125,9 @@ public:
 	      {
 		double freq=k/nchannels*200E6;
 		double dphase=delay*1.47/(c/freq)*2*pi;
-		data_buffer[j][i].data(IPosition(2,0,k-ch_lower))=Complex(df[k*2],df[k*2+1])*exp(Complex(0,1)*dphase);
-		if(std::isnan(df[k*2])||
-		   std::isnan(df[k*2+1]))
+		data_buffer[j][i].data(IPosition(2,0,k-ch_lower))=df[k]*exp(Complex(0,1)*dphase);
+		if(std::isnan(df[k].real())||
+		   std::isnan(df[k].imag()))
 		  {
 		    data_buffer[j][i].flag(IPosition(2,0,k-ch_lower))=true;
 		  }

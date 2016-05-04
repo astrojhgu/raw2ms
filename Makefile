@@ -1,4 +1,4 @@
-target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/raw2ms_splited_lp bin/test_date_str
+target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/raw2ms_splited_lp bin/test_date_str bin/test_uvw_with_uvmap bin/test_uvw bin/bin2uvmap bin/ms2uvmap
 
 all:$(target)
 
@@ -28,6 +28,30 @@ bin/raw2ms_splited_lp:obj/raw2ms_splited_lp.o obj/date_time.o
 	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
 
 obj/raw2ms_splited_lp.o:src/raw2ms_splited_lp.cpp
+	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
+
+bin/test_uvw_with_uvmap:obj/test_uvw_with_uvmap.o obj/date_time.o
+	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
+
+obj/test_uvw_with_uvmap.o:src/test_uvw_with_uvmap.cpp
+	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
+
+bin/test_uvw:obj/test_uvw.o obj/date_time.o
+	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
+
+obj/test_uvw.o:src/test_uvw.cpp
+	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
+
+bin/bin2uvmap:obj/bin2uvmap.o obj/date_time.o
+	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g -lfio -lcfitsio
+
+obj/bin2uvmap.o:src/bin2uvmap.cpp
+	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
+
+bin/ms2uvmap:obj/ms2uvmap.o obj/date_time.o
+	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g -lfio -lcfitsio
+
+obj/ms2uvmap.o:src/ms2uvmap.cpp
 	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
 
 bin/test_date_str:obj/test_date_str.o obj/date_time.o
