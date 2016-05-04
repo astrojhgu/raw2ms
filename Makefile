@@ -1,10 +1,10 @@
-target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/raw2ms_splited_lp bin/test_date_str bin/test_uvw_with_uvmap bin/test_uvw bin/bin2uvmap bin/ms2uvmap
+target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/raw2ms_splited_lp bin/raw2ms_splited_precal bin/test_date_str bin/test_uvw_with_uvmap bin/test_uvw bin/bin2uvmap bin/ms2uvmap
 
 all:$(target)
 
 INC=-I ../mscreate/include -I /usr/local/include/casacore/ -I ./include
 CXXFLAGS=-O3 -std=c++11
-LDFLAGS=-L ../mscreate/lib -lmscreate -lcasa_casa -lcasa_ms -lcasa_measures -lcasa_tables 
+LDFLAGS=-L ../mscreate/lib -lmscreate -lcasa_casa -lcasa_ms -lcasa_measures -lcasa_tables -lfio -lcfitsio
 
 bin/fakems:obj/fakems.o obj/date_time.o
 	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
@@ -28,6 +28,12 @@ bin/raw2ms_splited_lp:obj/raw2ms_splited_lp.o obj/date_time.o
 	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
 
 obj/raw2ms_splited_lp.o:src/raw2ms_splited_lp.cpp
+	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
+
+bin/raw2ms_splited_precal:obj/raw2ms_splited_precal.o obj/date_time.o
+	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
+
+obj/raw2ms_splited_precal.o:src/raw2ms_splited_precal.cpp
 	mkdir -p obj&&$(CXX) -c $< $(CXXFLAGS) $(INC) -g -o $@
 
 bin/test_uvw_with_uvmap:obj/test_uvw_with_uvmap.o obj/date_time.o
