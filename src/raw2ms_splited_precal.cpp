@@ -435,7 +435,7 @@ int main (int argc, char** argv)
     }
 
   
-  for(int i=0;i<120;++i)
+  for(int i=0;;++i)
     {
       cerr<<"reading..."<<endl;
       if(!vbs.fetch_one())
