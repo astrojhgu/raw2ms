@@ -40,7 +40,8 @@ const int nchannels=8192;
 const int nantennas=40;
 const int img_size=1024;
 const double max_uv=2640.00/(c/200E6);
-blitz::Array<double,2> mx(img_size,img_size);
+blitz::Array<double,2> mxr(img_size,img_size);
+blitz::Array<double,2> mxi(img_size,img_size);
 blitz::Array<long,2> wgt(img_size,img_size);
 
 std::vector<vector<double> > ant_pos_tab;
@@ -66,6 +67,7 @@ private:
   double start_time;
   long current_idx;
   long current_time_step_id;
+  int base_band_idx;
 public:
   visb_by_baseline_source(const std::vector<std::string>& antenna_names,
 			  const std::vector<std::vector<std::vector<std::complex<float> > > >& _gain_vec,
@@ -73,7 +75,7 @@ public:
 			  const std::string& data_path,
 			  const std::string& date,
 			  const std::vector<std::pair<int,int> >& _chlimits)
-    :gain_vec(_gain_vec),time_step(_time_step),raw_data_source(antenna_names.size()*(antenna_names.size()+1)/2),chlimits(_chlimits),time_file(data_path+"/time-0-"+date+".txt"),current_time(0),current_idx(0),current_time_step_id(0)
+    :gain_vec(_gain_vec),time_step(_time_step),raw_data_source(antenna_names.size()*(antenna_names.size()+1)/2),chlimits(_chlimits),time_file(data_path+"/time-0-"+date+".txt"),current_time(0),current_idx(0),current_time_step_id(0),base_band_idx(0)
   {
     assert(time_file.is_open());
     ifstream ifs_time_tmp(data_path+"/time-0-"+date+".txt");
@@ -89,18 +91,18 @@ public:
 	for(int j=i;j<nantennas;++j)
 	  {
 	    baseline_nodes.push_back({i,j});
-	    files.push_back(std::shared_ptr<std::ifstream>(new ifstream(data_path+"/"+antenna_names[i]+antenna_names[j]+"-0-"+date+".bin")));
+	    files.push_back(std::shared_ptr<std::ifstream>(new ifstream(data_path+"/"+antenna_names.at(i)+antenna_names.at(j)+"-0-"+date+".bin")));
 	    assert(files.back()->is_open());
 	  }
       }
     for(int i=0;i<chlimits.size();++i)
       {
-	IPosition data_shape(2,1,chlimits[i].second-chlimits[i].first);
+	IPosition data_shape(2,1,chlimits.at(i).second-chlimits.at(i).first);
 	std::vector<data_flag_pair> d(nbl);
 	for(int j=0;j<nbl;++j)
 	  {
-	    d[j].data.resize(data_shape);
-	    d[j].flag.resize(data_shape);
+	    d.at(j).data.resize(data_shape);
+	    d.at(j).flag.resize(data_shape);
 	  }
 	data_buffer.push_back(d);
       }
@@ -141,9 +143,7 @@ public:
 	double u=uvw[0];
 	double v=uvw[1];
 
-	//std::cerr<<u<<" "<<v<<std::endl;
-	//double delay=delay_vec[antenna_pair.second]-delay_vec[antenna_pair.first];
-	files[i]->read((char*)(df.data()),nchannels*2*sizeof(float));
+	files[i]->read((char*)(df.data()),df.size()*sizeof(std::complex<float>));
 	assert(files[i]->good());
 	for(int j=0;j<chlimits.size();++j)
 	  {
@@ -154,14 +154,14 @@ public:
 	      {
 		std::complex<float> gg=gain_vec.at(k).at(current_time_step_id).at(antenna_pair.second)*std::conj(gain_vec.at(k).at(current_time_step_id).at(antenna_pair.first));
 		
-		double freq=k/(double)nchannels*200E6;
+		double freq=k/(double)nchannels*200E6+freq_per_ch/2;
 		double lambda=c/freq;
 		double u_lambda=u/lambda;
 		double v_lambda=v/lambda;
 		//double dphase=delay*1.47/(c/freq)*2*pi;
-		auto corrected_data=df[k]*gg;
-		data_buffer[j][i].data(IPosition(2,0,k-ch_lower))=corrected_data;
-
+		auto corrected_data=df[k]/gg;
+		data_buffer.at(j).at(i).data(IPosition(2,0,k-ch_lower))=corrected_data;
+		//data_buffer.at(j).at(i).data(IPosition(2,0,k-ch_lower))=(double)j;
 		
 		if(std::isnan(corrected_data.real())||
 		   std::isnan(corrected_data.imag()))
@@ -181,7 +181,8 @@ public:
 		      {
 			//std::cerr<<iu<<" "<<iv<<std::endl;
 			//assert(std::isfinite(corrected_data.real()));
-			mx(iu,iv)+=corrected_data.real();
+			mxr(iu,iv)+=corrected_data.real();
+			mxi(iu,iv)+=corrected_data.imag();
 			wgt(iu,iv)+=1;
 		      }   
 		  }
@@ -192,28 +193,51 @@ public:
     if(time_step.at(current_time_step_id)<=current_idx)
       {
 	++current_time_step_id;
+	for(int k=2048;k<8192;++k)
+	  {
+	    if(current_time_step_id>=gain_vec.at(k).size())
+	      {
+		std::cerr<<k<<std::endl;
+		assert(0);
+	      }
+	    
+	  }
+		   
 
-	blitz::Array<double,2> img(img_size,img_size);
-	img=0;
+	blitz::Array<double,2> imgr(img_size,img_size);
+	blitz::Array<double,2> imgi(img_size,img_size);
+	imgr=0;
+	imgi=0;
 	for(int i=0;i<img_size;++i)
 	  {
 	    for(int j=0;j<img_size;++j)
 	      {
 		if(wgt(i,j)>0)
 		  {
-		    img(i,j)=mx(i,j)/wgt(i,j);
+		    imgr(i,j)=mxr(i,j)/wgt(i,j);
+		    imgi(i,j)=mxi(i,j)/wgt(i,j);
 		  }
 		else
 		  {
-		    img(i,j)=0;
+		    imgr(i,j)=0;
+		    imgi(i,j)=0;
 		  }
 	      }
 	  }
 	cfitsfile ff;
-	ff.create("uv.fits");
-	ff<<img;
+	ff.create("uvr.fits");
+	ff<<imgr;
+	ff.close();
+	ff.create("uvi.fits");
+	ff<<imgi;
+	ff.close();
       }
     return true;
+  }
+
+  void set_base_band_idx(int n)
+  {
+    base_band_idx=n;
   }
 
   std::pair<int,int> do_antenna_pair(int bl)const
@@ -223,7 +247,7 @@ public:
 
   casa::Array<casa::Complex> do_data(int field,int band,int bl)const
   {
-    return data_buffer.at(band).at(bl).data;
+    return data_buffer.at(band+base_band_idx).at(bl).data;
   }
 
   casa::Array<casa::Float> do_sigma(int field,int band,int bl)const
@@ -245,7 +269,7 @@ public:
 
   casa::Array<casa::Bool> do_flags(int field,int band,int bl)const
   {
-    return data_buffer.at(band).at(bl).flag;
+    return data_buffer.at(band+band+base_band_idx).at(bl).flag;
   }
 
   double do_time()const
@@ -278,7 +302,8 @@ int main (int argc, char** argv)
       std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <gain_prefix> <step file> <out name> <date> <input path> <ch1:ch2> [ch3:ch4] [ch5:ch6]..."<<std::endl;
       return -1;
     }
-  mx=0;
+  mxr=0;
+  mxi=0;
   wgt=0;
   std::string antenna_tab_name(argv[1]);
   std::string gain_prefix(argv[2]);
@@ -310,10 +335,11 @@ int main (int argc, char** argv)
 	      float ampl=gain_buffer[k+nantennas];
 	      float phase=gain_buffer[k];
 	      gain.at(k)=std::complex<float>(ampl*std::cos(phase),ampl*std::sin(phase));
-	      if(k==10&&i==5000)
-		{
-		  std::cerr<<gain[k]<<std::endl;
-		}
+
+	    }
+	  if(!gain_vec[i].empty())
+	    {
+	      assert(gain.size()==gain_vec[i].back().size());
 	    }
 	  gain_vec[i].push_back(gain);
 	}
@@ -409,17 +435,20 @@ int main (int argc, char** argv)
     }
 
   
-  for(int i=0;;++i)
+  for(int i=0;i<120;++i)
     {
       cerr<<"reading..."<<endl;
       if(!vbs.fetch_one())
 	{
 	  break;
 	}
+      
       cerr<<i<<endl;
       cerr<<"writing"<<endl;
+      int base_band_idx=0;
       for(auto i:msmakers)
 	{
+	  vbs.set_base_band_idx(base_band_idx++);
 	  i->write_time_step(vbs);
 	}
     }

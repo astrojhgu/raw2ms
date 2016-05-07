@@ -52,12 +52,13 @@ private:
   std::ifstream time_file;
   double current_time;
   double start_time;
+  int base_band_idx;
 public:
   visb_by_baseline_source(const std::vector<std::string>& antenna_names,
 		       const std::string& data_path,
 		       const std::string& date,
 		       const std::vector<std::pair<int,int> >& _chlimits)
-    :raw_data_source(antenna_names.size()*(antenna_names.size()+1)/2),chlimits(_chlimits),time_file(data_path+"/time-0-"+date+".txt"),current_time(0)
+    :raw_data_source(antenna_names.size()*(antenna_names.size()+1)/2),chlimits(_chlimits),time_file(data_path+"/time-0-"+date+".txt"),current_time(0),base_band_idx(0)
   {
     assert(time_file.is_open());
     ifstream ifs_time_tmp(data_path+"/time-0-"+date+".txt");
@@ -142,7 +143,7 @@ public:
 
   casa::Array<casa::Complex> do_data(int field,int band,int bl)const
   {
-    return data_buffer.at(band).at(bl).data;
+    return data_buffer.at(band+base_band_idx).at(bl).data;
   }
 
   casa::Array<casa::Float> do_sigma(int field,int band,int bl)const
@@ -164,12 +165,17 @@ public:
 
   casa::Array<casa::Bool> do_flags(int field,int band,int bl)const
   {
-    return data_buffer.at(band).at(bl).flag;
+    return data_buffer.at(band+base_band_idx).at(bl).flag;
   }
 
   double do_time()const
   {
     return current_time;
+  }
+
+  void set_base_band_idx(int n)
+  {
+    base_band_idx=n;
   }
 };
 
@@ -274,8 +280,10 @@ int main (int argc, char** argv)
 	}
       cout<<i<<endl;
       cout<<"writing"<<endl;
+      int base_band_idx=0;
       for(auto i:msmakers)
 	{
+	  vbs.set_base_band_idx(base_band_idx++);
 	  i->write_time_step(vbs);
 	}
     }
