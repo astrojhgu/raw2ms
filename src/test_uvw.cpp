@@ -30,45 +30,10 @@ using namespace ulastai;
 const double pi=atan(1)*4;
 int main(int argc,char* argv[])
 {
-  if(argc!=5)
-    {
-      std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <time file> <ant1> <ant2>"<<endl;
-      return -1;
-    }
-
-  Table ant_tab(argv[1],TableLock(TableLock::AutoNoReadLocking));
-
-  ROArrayColumn<Double> antPosCol(ant_tab,"POSITION");
-  Matrix<double> ant_poses(Array<Double>(antPosCol.getColumn()));
-
-  int nantennas=ant_poses.shape()[1];
-  ROScalarColumn<String> antNameCol(ant_tab,"NAME");
-  Array<String> antNames(antNameCol.getColumn());
+  std::vector<double> ant1_pos{2225079.88002 , -5440041.37753 , -2481724.59803};
+  std::vector<double> ant2_pos{2224981.09778 , -5440131.25039 , -2481621.06637};
   
-  std::map<std::string,std::vector<double> > ant_pos_map;
-
-  for(int i=0;i<nantennas;++i)
-    {
-      double x=ant_poses(0,i);
-      double y=ant_poses(1,i);
-      double z=ant_poses(2,i);
-
-      string name=antNames(IPosition(2,i,0));
-      cerr<<name<<" "<<x<<" "<<y<<" "<<z<<endl;
-
-      ant_pos_map[name]=std::vector<double>{x,y,z};
-    }
-
-  cerr<<argv[3]<<" -- "<<argv[4]<<endl;
-  auto iter1=ant_pos_map.find(std::string(argv[3]));
-  auto iter2=ant_pos_map.find(std::string(argv[4]));
-
-  assert(iter1!=ant_pos_map.end()&&
-	 iter2!=ant_pos_map.end());
-
-  auto ant1_pos=iter1->second;
-  auto ant2_pos=iter2->second;
-
+  
   std::vector<double> bl_coord;
   for(int i=0;i<3;++i)
     {
@@ -78,23 +43,14 @@ int main(int argc,char* argv[])
 				     bl_coord[1],
 				     bl_coord[2])),
 	       MBaseline::ITRF);
-
-
-  ifstream ifs_time(argv[2]);
-  for(;;)
-    {
-      std::string time_line;
-      std::getline(ifs_time,time_line);
-      if(!ifs_time.good())
-	{
-	  break;
-	}
-      double current_time=parse_21cma_date(time_line);
-      casa::Vector<double> uvw(mscreate::calc_uvw(bl,current_time,0,pi/2));
-      double u=uvw(0);
-      double v=uvw(1);
-      double w=uvw(2);
-      cout<<u<<" "<<v<<endl;
-    }
   
+  
+  double current_time=4860027420.0;
+  double ra=1.40920681045;
+  double dec=-0.636322083578;
+  casa::Vector<double> uvw(mscreate::calc_uvw(bl,current_time,ra,dec));
+  double u=uvw(0);
+  double v=uvw(1);
+  double w=uvw(2);
+  cout<<u<<" "<<v<<" "<<w<<endl;
 }
