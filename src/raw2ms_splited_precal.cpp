@@ -23,6 +23,7 @@
 #include <memory>
 #include <date_time.hpp>
 #include <fio.h>
+#include <signal.h>
 using namespace ulastai;
 using namespace casa;
 using namespace std;
@@ -39,7 +40,10 @@ const bool writeAutoCorr=false;
 const int nchannels=8192;
 const int nantennas=40;
 const int img_size=1024;
-const double max_uv=2640.00/(c/200E6);
+double max_uv=2640.00/(c/200E6);
+const double max_freq=200E6;
+bool stop=false;
+
 blitz::Array<double,2> mxr(img_size,img_size);
 blitz::Array<double,2> mxi(img_size,img_size);
 blitz::Array<long,2> wgt(img_size,img_size);
@@ -82,6 +86,7 @@ public:
     std::string time_line;
     getline(ifs_time_tmp,time_line);
     start_time=parse_21cma_date(time_line)-3.2;
+    //start_time-=4560;
     ifs_time_tmp.close();
     
     int nantennas=antenna_names.size();
@@ -124,6 +129,7 @@ public:
       }
 
     current_time=parse_21cma_date(time_line);
+    //current_time-=4560;
     
     for(int i=0;i<files.size();++i)
       {
@@ -132,9 +138,9 @@ public:
 	std::vector<double>& ant1_pos=ant_pos_tab.at(antenna_pair.first);
 	std::vector<double>& ant2_pos=ant_pos_tab.at(antenna_pair.second);
 
-	double blx=ant2_pos[0]-ant1_pos[0];
-	double bly=ant2_pos[1]-ant1_pos[1];
-	double blz=ant2_pos[2]-ant1_pos[2];
+	double blx=ant1_pos[0]-ant2_pos[0];
+	double bly=ant1_pos[1]-ant2_pos[1];
+	double blz=ant1_pos[2]-ant2_pos[2];
 	
 	MBaseline bl(MVBaseline(MVPosition(blx,bly,blz)),
 		     MBaseline::ITRF);
@@ -158,6 +164,20 @@ public:
 		double lambda=c/freq;
 		double u_lambda=u/lambda;
 		double v_lambda=v/lambda;
+
+		double uv_lambda=std::sqrt(u_lambda*u_lambda+v_lambda*v_lambda);
+
+		if(uv_lambda>max_uv)
+		  {
+		    std::cerr<<"ants:"<<antenna_pair.first<<" "<<antenna_pair.second<<endl;
+		    std::cerr<<"time:"<<current_time<<endl;
+		    std::cerr<<"uvw="<<uvw[0]<<" "<<uvw[1]<<" "<<uvw[2]<<endl;
+		    std::cerr<<"ch="<<k<<endl;
+		    std::cerr<<"freq="<<freq<<endl;
+		    std::cerr<<"lambda="<<lambda<<endl;
+		    assert(0);
+		  }
+		
 		//double dphase=delay*1.47/(c/freq)*2*pi;
 		auto corrected_data=df[k]/gg;
 		data_buffer.at(j).at(i).data(IPosition(2,0,k-ch_lower))=corrected_data;
@@ -174,6 +194,19 @@ public:
 
 		    int iu=u_lambda/(max_uv)*(img_size/2)+img_size/2;
 		    int iv=v_lambda/(max_uv)*(img_size/2)+img_size/2;
+		    
+		    if(iu<0||iu>img_size||
+		       iv<0||iv>img_size)
+		      {
+			std::cerr<<"ants:"<<antenna_pair.first<<" "<<antenna_pair.second<<endl;
+			std::cerr<<"time:"<<current_time<<endl;
+			std::cerr<<"uvw="<<uvw[0]<<" "<<uvw[1]<<" "<<uvw[2]<<endl;
+			std::cerr<<"ch="<<k<<endl;
+			std::cerr<<"freq="<<freq<<endl;
+			std::cerr<<"lambda="<<lambda<<endl;
+			std::cerr<<"iuv="<<iu<<" "<<iv<<endl;
+			assert(0);
+		      }
 		    
 		    if(iu>=0&&iu<img_size&&
 		       iv>=0&&iv<img_size&&
@@ -295,8 +328,27 @@ std::pair<int,int> parse_ch(const std::string& s)
   return result;
 }
 
+void signal_handler(int sig)
+{
+  std::cerr<<"caught signal:"<<sig<<endl;
+  switch(sig)
+    {
+    case SIGKILL:
+    case SIGINT:
+    case SIGQUIT:
+    case SIGTERM:
+      //std::cerr<<"stopping..."<<std::endl;
+      stop=true;
+      break;
+    default:
+      break;
+    }
+}
+
 int main (int argc, char** argv)
 {
+  signal(SIGINT,signal_handler);
+  
   if(argc<8)
     {
       std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <gain_prefix> <step file> <out name> <date> <input path> <ch1:ch2> [ch3:ch4] [ch5:ch6]..."<<std::endl;
@@ -394,7 +446,23 @@ int main (int argc, char** argv)
   mx/=its_ant_pos.shape()[1];
   my/=its_ant_pos.shape()[1];
   mz/=its_ant_pos.shape()[1];
-  
+
+  double max_bl=0;
+  for(int i=0;i<its_ant_pos.shape()[1];++i)
+    {
+      double x1=ant_pos(0,i);
+      double y1=ant_pos(1,i);
+      double z1=ant_pos(2,i);
+      for(int j=i+1;j<its_ant_pos.shape()[1];++j)
+	{
+	  double x2=ant_pos(0,j);
+	  double y2=ant_pos(1,j);
+	  double z2=ant_pos(2,j);
+	  double bl=std::sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)+(z2-z1)*(z2-z1));
+	  max_bl=std::max(max_bl,bl);
+	}
+    }
+  max_uv=max_bl/(c/max_freq);
   casa::MPosition array_pos(casa::MVPosition(mx,my,mz),MPosition::ITRF);
 
   
@@ -450,8 +518,16 @@ int main (int argc, char** argv)
 	{
 	  vbs.set_base_band_idx(base_band_idx++);
 	  i->write_time_step(vbs);
+	  //i->flush();
+	  
+	}
+      if(stop)
+	{
+	  std::cerr<<"stopping..."<<std::endl;
+	  break;
 	}
     }
   
   return 0;
 }
+
