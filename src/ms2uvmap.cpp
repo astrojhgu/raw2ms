@@ -69,8 +69,8 @@ int main(int argc,char* argv[])
   //cout<<descID.nrow()<<endl;
 
   //const Vector<Double> v(uvw.get(100000));
-  const ROArrayColumn< Complex >& data_column(columns.data());
-  //const ROArrayColumn< Complex >& data_column(columns.correctedData());
+  //const ROArrayColumn< Complex >& data_column(columns.data());
+  const ROArrayColumn< Complex >& data_column(columns.correctedData());
   //const ROArrayColumn< Complex >& data_column(columns.modelData());
   //const ArrayColumn<Complex> data_column(mstab,"MODEL_DATA");
   //std::cout<<v<<std::endl;
