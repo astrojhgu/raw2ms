@@ -84,6 +84,7 @@ int main(int argc,char* argv[])
   
 
   for(int i=0;i<columns.nrow();++i)
+  //for(int i=0;i<3200*820;++i)
     {
       int did=descID.get(i);
       int spwid=spwId.get(did);
