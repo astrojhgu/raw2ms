@@ -33,8 +33,7 @@ using namespace std;
 using namespace casa;
 using namespace ulastai;
 const double pi=atan(1)*4;
-const int nch=8192;
-const int img_size=1024;
+const int img_size=4096;
 const double max_bl=2640;
 const double max_freq=200E6;
 const double c=2.99792458E8;
@@ -69,8 +68,8 @@ int main(int argc,char* argv[])
   //cout<<descID.nrow()<<endl;
 
   //const Vector<Double> v(uvw.get(100000));
-  //const ROArrayColumn< Complex >& data_column(columns.data());
-  const ROArrayColumn< Complex >& data_column(columns.correctedData());
+  const ROArrayColumn< Complex >& data_column(columns.data());
+  //const ROArrayColumn< Complex >& data_column(columns.correctedData());
   //const ROArrayColumn< Complex >& data_column(columns.modelData());
   //const ArrayColumn<Complex> data_column(mstab,"MODEL_DATA");
   //std::cout<<v<<std::endl;
@@ -108,12 +107,14 @@ int main(int argc,char* argv[])
 	      double lambda=c/freq;
 	      double u_l=uvw[0]/lambda;
 	      double v_l=uvw[1]/lambda;
+	      double w_l=uvw[2]/lambda;
 	      int iu=u_l/max_uv*(img_size/2)+img_size/2;
 	      int iv=v_l/max_uv*(img_size/2)+img_size/2;
 
 	      if(iu>=0&&iu<img_size&&iv>=0&&iv<img_size)
 		{
 		  mxr(iu,iv)+=d.real();
+		  //mxr(iu,iv)+=std::sin(w_l*2*3.1415926);
 		  mxi(iu,iv)+=d.imag();
 		  cnt(iu,iv)+=1;
 		}
