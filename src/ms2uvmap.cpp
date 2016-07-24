@@ -40,9 +40,9 @@ const double c=2.99792458E8;
 const double max_uv=max_bl/(c/max_freq);
 int main(int argc,char* argv[])
 {
-  if(argc!=3)
+  if(argc!=4)
     {
-      std::cerr<<"Usage:"<<argv[0]<<" <ms table> <outfile>"<<endl;
+      std::cerr<<"Usage:"<<argv[0]<<" <ms table> <outfile> <column>"<<endl;
       return -1;
     }
   
@@ -68,10 +68,10 @@ int main(int argc,char* argv[])
   //cout<<descID.nrow()<<endl;
 
   //const Vector<Double> v(uvw.get(100000));
-  const ROArrayColumn< Complex >& data_column(columns.data());
+  //const ROArrayColumn< Complex >& data_column(columns.data());
   //const ROArrayColumn< Complex >& data_column(columns.correctedData());
   //const ROArrayColumn< Complex >& data_column(columns.modelData());
-  //const ArrayColumn<Complex> data_column(mstab,"MODEL_DATA");
+  const ArrayColumn<Complex> data_column(mstab,argv[3]);
   //std::cout<<v<<std::endl;
 
   blitz::Array<double,2> mxr(img_size,img_size);
