@@ -206,7 +206,7 @@ int main (int argc, char** argv)
   mz/=its_ant_pos.shape()[1];
   
   
-  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF),true);
+  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF));
   msmaker.set_correct_w(true);
   int nch=ch_end-ch_beg;
   double fref=(ch_beg+ch_end)/2.0*freq_per_ch;

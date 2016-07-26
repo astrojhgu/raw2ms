@@ -19,6 +19,8 @@
 #include <sstream>
 #include <date_time.hpp>
 
+//#define AUTO_CORR 1
+
 using namespace ulastai;
 using namespace casa;
 using namespace std;
@@ -45,17 +47,25 @@ class visb_by_baseline_source
 {
 private:
   std::vector<shared_ptr<ifstream> > files;
+#ifndef AUTO_CORR
+  std::vector<shared_ptr<ifstream> > auto_files;
+#endif
   std::vector<std::pair<int,int> > baseline_nodes;
   std::vector<data_flag_pair> data_buffer;
   std::pair<int,int> chlimit;
   std::ifstream time_file;
   double current_time;
   double start_time;
+  int nantennas;
 public:
   visb_by_baseline_source(const std::vector<std::string>& antenna_names,
 			  const std::string& data_path,
 			  const std::pair<int,int>& _chlimit)
-    :raw_data_source(antenna_names.size()*(antenna_names.size()+1)/2),chlimit(_chlimit),time_file(data_path+"/time.txt"),current_time(0)
+#ifdef AUTO_CORR
+    :raw_data_source(antenna_names.size()*(antenna_names.size()+1)/2),chlimit(_chlimit),time_file(data_path+"/time.txt"),current_time(0),nantennas(antenna_names.size())
+#else
+     :raw_data_source(antenna_names.size()*(antenna_names.size()-1)/2),chlimit(_chlimit),time_file(data_path+"/time.txt"),current_time(0),nantennas(antenna_names.size())
+#endif
   {
     assert(time_file.is_open());
     ifstream ifs_time_tmp(data_path+"/time.txt");
@@ -64,18 +74,27 @@ public:
     start_time=parse_21cma_date(time_line)-dt;
     ifs_time_tmp.close();
     
-    int nantennas=antenna_names.size();
+#ifdef AUTO_CORR
     int nbl=nantennas*(nantennas+1)/2;
+#else
+    int nbl=nantennas*(nantennas-1)/2;
+#endif
     for(int i=0;i<nantennas;++i)
       {
+#ifdef AUTO_CORR
 	for(int j=i;j<nantennas;++j)
-	  {
-	    baseline_nodes.push_back({i,j});
-	    files.push_back(std::shared_ptr<std::ifstream>(new ifstream(data_path+"/"+antenna_names[i]+antenna_names[j]+".bin")));
-	    std::cerr<<data_path+"/"+antenna_names[i]+antenna_names[j]+".bin"<<std::endl;
-	    assert(files.back()->is_open());
-	  }
+#else
+	  auto_files.push_back(std::shared_ptr<std::ifstream>(new ifstream(data_path+"/"+antenna_names[i]+antenna_names[i]+".bin")));
+	  for(int j=i+1;j<nantennas;++j)
+#endif
+	    {
+	      baseline_nodes.push_back({i,j});
+	      files.push_back(std::shared_ptr<std::ifstream>(new ifstream(data_path+"/"+antenna_names[i]+antenna_names[j]+".bin")));
+	      std::cerr<<data_path+"/"+antenna_names[i]+antenna_names[j]+".bin"<<std::endl;
+	      assert(files.back()->is_open());
+	    }
       }
+    assert(baseline_nodes.size()==1);
     //exit(0);
     IPosition data_shape(2,1,chlimit.second-chlimit.first);
     std::vector<data_flag_pair> d(nbl);
@@ -103,6 +122,15 @@ public:
       }
     
     current_time=parse_21cma_date(time_line);
+
+#ifndef AUTO_CORR
+    std::vector<std::vector<float> > df_auto(nantennas,std::vector<float>(nchannels*2));
+    for(int i=0;i<auto_files.size();++i)
+      {
+	auto_files[i]->read((char*)(df_auto[i].data()),nchannels*2*sizeof(float));
+      }
+#endif
+    
     
     for(int i=0;i<files.size();++i)
       {
@@ -117,15 +145,25 @@ public:
 	  {
 	    double freq=(ch_beg+k)*freq_per_ch;
 	    double dphase=(antenna_pair.first==antenna_pair.second)?0:delay/(c/freq)*2*pi;
-	    data_buffer[i].data(IPosition(2,0,k))=Complex(df[k*2],df[k*2+1])*exp(Complex(0,1)*dphase);
-	    if(std::isnan(df[k*2])||
-	       std::isnan(df[k*2+1]))
+#ifndef AUTO_CORR
+	    double a1=df_auto[antenna_pair.first][2*k];
+	    double a2=df_auto[antenna_pair.second][2*k];
+	    auto c=Complex(df[k*2],df[k*2+1])/std::sqrt(a1*a2)*exp(Complex(0,1)*dphase);
+#else
+	    auto c=Complex(df[k*2],df[k*2+1])*exp(Complex(0,1)*dphase);
+#endif
+	    if(std::isnan(c.real())||
+	       std::isnan(c.imag())||
+	       std::isinf(c.real())||
+	       std::isinf(c.imag()))
 	      {
 		data_buffer[i].flag(IPosition(2,0,k))=true;
+		data_buffer[i].data(IPosition(2,0,k))=Complex();
 	      }
 	    else
 	      {
 		data_buffer[i].flag(IPosition(2,0,k))=false;
+		data_buffer[i].data(IPosition(2,0,k))=c;
 	      }
 	  }
       }
@@ -140,6 +178,7 @@ public:
   casa::Array<casa::Complex> do_data(int field,int band,int bl)const
   {
     assert(band==0);
+    assert(bl==0);
     return data_buffer.at(bl).data;
   }
 
@@ -240,7 +279,7 @@ int main (int argc, char** argv)
   mz/=its_ant_pos.shape()[1];
   
   
-  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF),true);
+  mscreate msmaker(out_name, vbs.get_start_time(), 1,  ant_tab, casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF));
   msmaker.set_correct_w(true);
   int nch=ch_end-ch_beg;
   double fref=(ch_beg+ch_end)/2.0*freq_per_ch;

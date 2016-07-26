@@ -153,8 +153,7 @@ void createms (int nband, int bandnr, const string& ms_name)
   
   mscreate msmaker(ms_name, its_start_time, 1,
                    its_ant_tab,
-		   casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF),
-		   its_write_auto_corr);
+		   casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF));
   for (int i=0; i<nband; ++i) {
     // Determine middle of band.
     
