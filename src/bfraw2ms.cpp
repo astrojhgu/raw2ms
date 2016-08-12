@@ -26,7 +26,7 @@ using namespace casa;
 using namespace std;
 
 const double c=2.99792458E8;//m/s
-const double freq_per_ch=200E6/8192.0;
+double freq_per_ch=200E6/8192.0;
 const double dt=11;
 const double pi=atan(1)*4;
 double RA=0;
@@ -229,9 +229,9 @@ std::pair<int,int> parse_ch(const std::string& s)
 
 int main (int argc, char** argv)
 {
-  if(argc<9)
+  if(argc!=10)
     {
-      std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <out name> <input path> <ra> <dec> <chbeg> <chend> <delay>"<<std::endl;
+      std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <out name> <input path> <ra> <dec> <nch> <chbeg> <chend> <delay>"<<std::endl;
       return -1;
     }
   std::string antenna_tab_name(argv[1]);
@@ -239,11 +239,13 @@ int main (int argc, char** argv)
   std::string input_path(argv[3]);
   RA=std::stod(std::string(argv[4]));
   Dec=std::stod(std::string(argv[5]));
-  ch_beg=std::stoi(std::string(argv[6]));
-  ch_end=std::stoi(std::string(argv[7]));
+  int nallch=std::stoi(std::string(argv[6]));
+  freq_per_ch=200E6/nallch;
+  ch_beg=std::stoi(std::string(argv[7]));
+  ch_end=std::stoi(std::string(argv[8]));
   nchannels=ch_end-ch_beg;
   std::cerr<<"nch="<<nchannels<<std::endl;
-  delay=std::stod(std::string(argv[8]));
+  delay=std::stod(std::string(argv[9]));
   std::cerr<<"delay="<<delay<<std::endl;
   //exit(0);
   
