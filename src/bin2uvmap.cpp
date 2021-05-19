@@ -27,7 +27,7 @@
 
 //using namespace blitz;
 using namespace std;
-using namespace casa;
+using namespace casacore;
 using namespace ulastai;
 const double pi=atan(1)*4;
 const int nch=8192;
@@ -115,7 +115,7 @@ int main(int argc,char* argv[])
       assert(ifs_bin.good());
       
       double current_time=parse_21cma_date(time_line);
-      casa::Vector<double> uvw(mscreate::calc_uvw(bl,current_time,0,pi/2));
+      casacore::Vector<double> uvw(mscreate::calc_uvw(bl,current_time,0,pi/2));
       double u=uvw(0);
       double v=uvw(1);
       double w=uvw(2);

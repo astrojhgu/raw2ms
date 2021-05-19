@@ -24,7 +24,7 @@ int month2num(const std::string& month_name)
 
 double parse_21cma_date(const std::string& date_string)
 {
-  using namespace casa;
+  using namespace casacore;
   std::string wd,mn,day,time,year;
   istringstream iss(date_string);
   iss >> wd >> mn >> day >> time >> year;

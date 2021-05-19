@@ -25,7 +25,7 @@
 #include <vector>
 
 using namespace std;
-using namespace casa;
+using namespace casacore;
 using namespace ulastai;
 const double pi=atan(1)*4;
 int main(int argc,char* argv[])
@@ -48,7 +48,7 @@ int main(int argc,char* argv[])
   double current_time=4860027420.0;
   double ra=1.40920681045;
   double dec=-0.636322083578;
-  casa::Vector<double> uvw(mscreate::calc_uvw(bl,current_time,ra,dec));
+  casacore::Vector<double> uvw(mscreate::calc_uvw(bl,current_time,ra,dec));
   double u=uvw(0);
   double v=uvw(1);
   double w=uvw(2);

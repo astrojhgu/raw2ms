@@ -30,7 +30,7 @@
 
 //using namespace blitz;
 using namespace std;
-using namespace casa;
+using namespace casacore;
 using namespace ulastai;
 const double pi=atan(1)*4;
 const int img_size=4096;

@@ -21,7 +21,7 @@
 #include <date_time.hpp>
 
 using namespace ulastai;
-using namespace casa;
+using namespace casacore;
 using namespace std;
 
 const double c=2.99792458E8;//m/s
@@ -37,8 +37,8 @@ const int nchannels=8192;
 
 struct data_flag_pair
 {
-  casa::Array<casa::Complex> data;
-  casa::Array<casa::Bool> flag;
+  casacore::Array<casacore::Complex> data;
+  casacore::Array<casacore::Bool> flag;
 };
 
 class visb_by_baseline_source
@@ -141,15 +141,15 @@ public:
     return baseline_nodes.at(bl);
   }
 
-  casa::Array<casa::Complex> do_data(int field,int band,int bl)const
+  casacore::Array<casacore::Complex> do_data(int field,int band,int bl)const
   {
     return data_buffer.at(band+base_band_idx).at(bl).data;
   }
 
-  casa::Array<casa::Float> do_sigma(int field,int band,int bl)const
+  casacore::Array<casacore::Float> do_sigma(int field,int band,int bl)const
   {
     IPosition data_shape(1,1);
-    casa::Array<Float> sigma(data_shape);
+    casacore::Array<Float> sigma(data_shape);
     auto p=do_antenna_pair(bl);
     if(p.first==p.second)
       {
@@ -163,7 +163,7 @@ public:
     return sigma;
   }
 
-  casa::Array<casa::Bool> do_flags(int field,int band,int bl)const
+  casacore::Array<casacore::Bool> do_flags(int field,int band,int bl)const
   {
     return data_buffer.at(band+base_band_idx).at(bl).flag;
   }
@@ -233,7 +233,7 @@ int main (int argc, char** argv)
   my/=its_ant_pos.shape()[1];
   mz/=its_ant_pos.shape()[1];
   
-  casa::MPosition array_pos(casa::MVPosition(mx,my,mz),MPosition::ITRF);
+  casacore::MPosition array_pos(casacore::MVPosition(mx,my,mz),MPosition::ITRF);
 
   
   ROScalarColumn<String> antNameCol(ant_tab,"NAME");

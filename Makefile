@@ -2,7 +2,7 @@ target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/raw2ms_splited_lp bin/raw2ms
 
 all:$(target)
 
-INC=-I ../mscreate/include -I /usr/local/include/casacore/ -I ./include
+INC=-I ../mscreate/include -I /usr/include/casacore/ -I ./include
 CXXFLAGS=-O3 -std=c++11
 LDFLAGS=-L ../mscreate/lib -lmscreate -lcasa_casa -lcasa_ms -lcasa_measures -lcasa_tables -lfio -lcfitsio
 

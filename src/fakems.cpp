@@ -18,7 +18,7 @@
 #include <sstream>
 
 using namespace ulastai;
-using namespace casa;
+using namespace casacore;
 using namespace std;
 
 // Define the variables shared between the functions.
@@ -87,7 +87,7 @@ public:
     return bl[b];
   }
 
-  casa::Array<casa::Complex> do_data(int field,int band,int bl)const
+  casacore::Array<casacore::Complex> do_data(int field,int band,int bl)const
   {
     //cout<<"bl"<<endl;
     assert(band>=0&&band<its_nbands);
@@ -98,17 +98,17 @@ public:
     return d;
   }
 
-  casa::Array<casa::Float> do_sigma(int, int, int) const override
+  casacore::Array<casacore::Float> do_sigma(int, int, int) const override
   {
-    casa::IPosition shape(1,1);
-    casa::Array<casa::Float> sigma(shape);
+    casacore::IPosition shape(1,1);
+    casacore::Array<casacore::Float> sigma(shape);
     const double dk=24e3;
     const double dt=3.2;
     sigma=1/std::sqrt(dk*dt);
     return sigma;
   }
 
-  casa::Array<casa::Bool> do_flags(int field,int band,int bl)const
+  casacore::Array<casacore::Bool> do_flags(int field,int band,int bl)const
   {
     assert(band>=0&&band<its_nbands);
     int n=its_nfreqs[band];
@@ -153,7 +153,7 @@ void createms (int nband, int bandnr, const string& ms_name)
   
   mscreate msmaker(ms_name, its_start_time, 1,
                    its_ant_tab,
-		   casa::MPosition(casa::MVPosition(mx,my,mz),MPosition::ITRF));
+		   casacore::MPosition(casacore::MVPosition(mx,my,mz),MPosition::ITRF));
   for (int i=0; i<nband; ++i) {
     // Determine middle of band.
     
