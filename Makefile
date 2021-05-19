@@ -1,10 +1,16 @@
-target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/raw2ms_splited_lp bin/raw2ms_splited_precal bin/test_date_str bin/test_uvw_with_uvmap bin/test_uvw bin/bin2uvmap bin/ms2uvmap bin/bfraw2ms bin/fakems2
+target=bin/fakems bin/raw2ms bin/raw2ms_splited bin/raw2ms_splited_lp bin/raw2ms_splited_precal bin/test_date_str bin/test_uvw_with_uvmap bin/test_uvw bin/bin2uvmap bin/ms2uvmap bin/bfraw2ms bin/fakems2 bin/mkanttab
 
 all:$(target)
 
 INC=-I ../mscreate/include -I /usr/local/include/casacore/ -I ./include
 CXXFLAGS=-O3 -std=c++11
 LDFLAGS=-L ../mscreate/lib -lmscreate -lcasa_casa -lcasa_ms -lcasa_measures -lcasa_tables -lfio -lcfitsio
+
+bin/mkanttab:obj/mkanttab.o obj/date_time.o
+	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
+
+obj/mkanttab.o:src/mkanttab.cpp
+	mkdir -p obj&&$(CXX) -c $<  $(CXXFLAGS) $(INC) -g -o $@
 
 bin/fakems:obj/fakems.o obj/date_time.o
 	mkdir -p bin&&$(CXX) -o $@ $^ $(LDFLAGS) -g
