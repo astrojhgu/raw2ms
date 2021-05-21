@@ -19,6 +19,7 @@
 #include <sstream>
 #include <memory>
 #include <date_time.hpp>
+#include <signal_handler.hpp>
 
 using namespace ulastai;
 using namespace casacore;
@@ -271,7 +272,7 @@ int main (int argc, char** argv)
     }
 
   
-  for(int i=0;;++i)
+  for(int i=0;running;++i)
     {
       cout<<"reading..."<<endl;
       if(!vbs.fetch_one())

@@ -18,7 +18,7 @@
 #include <fstream>
 #include <sstream>
 #include <date_time.hpp>
-
+#include <signal_handler.hpp>
 using namespace ulastai;
 using namespace casacore;
 using namespace std;
@@ -33,6 +33,7 @@ const double RA=0;
 const double Dec=pi/2;
 const bool writeAutoCorr=false;
 const int nchannels=8192;
+
 
 struct data_flag_pair
 {
@@ -254,7 +255,7 @@ int main (int argc, char** argv)
 
   msmaker.add_field(0.0,pi/2);
 
-  for(int i=0;;++i)
+  for(int i=0;running;++i)
     {
       cout<<"reading..."<<endl;
       if(!vbs.fetch_one())

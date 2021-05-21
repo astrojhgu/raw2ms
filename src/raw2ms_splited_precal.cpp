@@ -23,7 +23,9 @@
 #include <memory>
 #include <date_time.hpp>
 #include <fio.h>
-#include <signal.h>
+#include <signal_handler.hpp>
+
+
 using namespace ulastai;
 using namespace casacore;
 using namespace std;
@@ -328,27 +330,9 @@ std::pair<int,int> parse_ch(const std::string& s)
   return result;
 }
 
-void signal_handler(int sig)
-{
-  std::cerr<<"caught signal:"<<sig<<endl;
-  switch(sig)
-    {
-    case SIGKILL:
-    case SIGINT:
-    case SIGQUIT:
-    case SIGTERM:
-      //std::cerr<<"stopping..."<<std::endl;
-      stop=true;
-      break;
-    default:
-      break;
-    }
-}
 
 int main (int argc, char** argv)
 {
-  signal(SIGINT,signal_handler);
-  
   if(argc<8)
     {
       std::cerr<<"Usage:"<<argv[0]<<" <antenna table> <gain_prefix> <step file> <out name> <date> <input path> <ch1:ch2> [ch3:ch4] [ch5:ch6]..."<<std::endl;
@@ -503,7 +487,7 @@ int main (int argc, char** argv)
     }
 
   
-  for(int i=0;;++i)
+  for(int i=0;running;++i)
     {
       cerr<<"reading..."<<endl;
       if(!vbs.fetch_one())
@@ -520,11 +504,6 @@ int main (int argc, char** argv)
 	  i->write_time_step(vbs);
 	  //i->flush();
 	  
-	}
-      if(stop)
-	{
-	  std::cerr<<"stopping..."<<std::endl;
-	  break;
 	}
     }
   
