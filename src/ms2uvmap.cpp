@@ -65,6 +65,9 @@ int main(int argc,char* argv[])
   const ROScalarColumn<Int>& descID(columns.dataDescId());
 
   const ROArrayColumn< Bool >& flag_column(columns.flag());
+
+  auto ant1_column(columns.antenna1());
+  auto ant2_column(columns.antenna2());
   //cout<<descID.nrow()<<endl;
 
   //const Vector<Double> v(uvw.get(100000));
@@ -91,47 +94,50 @@ int main(int argc,char* argv[])
       const Vector<Double> uvw(uvw_column.get(i));
       const Vector<Complex> data(data_column.get(i));
       const Vector<Bool> flag(flag_column.get(i));
+      auto ant1=ant1_column.get(i);
+      auto ant2=ant2_column.get(i);
+      
       //cout<<i<<endl;
       if(i%10000==0)
-	{
-	  cout<<i/(double)columns.nrow()<<" "<<chan_freq.size()<<endl;
-	}
+      {
+        cout<<i/(double)columns.nrow()<<" "<<chan_freq.size()<<endl;
+      }
 
       for(int ch=0;ch<data.size();++ch)
-	{
-	  //cout<<d.real()<<endl;
-	  if(!flag[ch])
-	    {
-	      Complex d(data[ch]);
-	      double freq=chan_freq[ch];
-	      double lambda=c/freq;
-	      double u_l=uvw[0]/lambda;
-	      double v_l=uvw[1]/lambda;
-	      double w_l=uvw[2]/lambda;
-	      int iu=u_l/max_uv*(img_size/2)+img_size/2;
-	      int iv=v_l/max_uv*(img_size/2)+img_size/2;
+      {
+        //cout<<d.real()<<endl;
+        if(!flag[ch])
+          {
+            Complex d(data[ch]);
+            double freq=chan_freq[ch];
+            double lambda=c/freq;
+            double u_l=uvw[0]/lambda;
+            double v_l=uvw[1]/lambda;
+            double w_l=uvw[2]/lambda;
+            int iu=u_l/max_uv*(img_size/2)+img_size/2;
+            int iv=v_l/max_uv*(img_size/2)+img_size/2;
 
-	      if(iu>=0&&iu<img_size&&iv>=0&&iv<img_size)
-		{
-		  mxr(iu,iv)+=d.real();
-		  //mxr(iu,iv)+=std::sin(w_l*2*3.1415926);
-		  mxi(iu,iv)+=d.imag();
-		  cnt(iu,iv)+=1;
-		}
-	    }
-	} 
+            if(iu>=0&&iu<img_size&&iv>=0&&iv<img_size && ant1!=ant2)
+            {
+              mxr(iu,iv)+=d.real();
+              //mxr(iu,iv)+=std::sin(w_l*2*3.1415926);
+              mxi(iu,iv)+=d.imag();
+              cnt(iu,iv)+=1;
+            }
+          }
+      } 
     }
 
   for(int i=0;i<img_size;++i)
     {
       for(int j=0;j<img_size;++j)
-	{
-	  if(cnt(i,j)>0)
-	    {
-	      mxr(i,j)/=cnt(i,j);
-	      mxi(i,j)/=cnt(i,j);
-	    }
-	}
+      {
+        if(cnt(i,j)>0)
+          {
+            mxr(i,j)/=cnt(i,j);
+            mxi(i,j)/=cnt(i,j);
+          }
+      }
     }
   std::string prefix(argv[2]);
   cfitsfile ff;
