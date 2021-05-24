@@ -40,16 +40,16 @@ using namespace casacore;
 
 int main (int argc, char *argv[])
 {
-    if (argc != 2)
+    if (argc != 3)
         {
-            std::cerr << "Usage:" << argv[0] << " <input file>" << std::endl;
+            std::cerr << "Usage:" << argv[0] << " <anttab name> <input file>" << std::endl;
             std::cerr << "Input file: a 4-space-separated-columns file, with the columns of "
                          "antenna name, WCS84 x, y, and z for each antenna station"
                       << std::endl;
             return -1;
         }
 
-    TableDesc td ("ANTENNA", TableDesc::New);
+    TableDesc td (argv[1], TableDesc::New);
     td.addColumn (ScalarColumnDesc<double> ("DISH_DIAMETER", "Physical diameter of dish",
                                             "StandardStMan", "StandardStMan"));
     td.addColumn (ScalarColumnDesc<bool> ("FLAG_ROW", "Flag for this row", "StandardStMan", "StandardStMan"));
@@ -67,9 +67,9 @@ int main (int argc, char *argv[])
     td.addColumn (ScalarColumnDesc<String> ("TYPE", "Antenna type (e.g., SPACE-BASED",
                                             "StandardStMan", "StandardStMan"));
 
-    SetupNewTable snt ("ANTENNA", td, Table::New);
+    SetupNewTable snt (argv[1], td, Table::New);
     Table anttab (snt);
-    std::ifstream antenna_pos (argv[1]);
+    std::ifstream antenna_pos (argv[2]);
     for (int i = 0;; ++i)
         {
             std::string station_name;
