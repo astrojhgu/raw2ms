@@ -28,123 +28,123 @@
 #include <vector>
 #include <fio.h>
 
-//using namespace blitz;
+// using namespace blitz;
 using namespace std;
 using namespace casacore;
 using namespace ulastai;
-const double pi=atan(1)*4;
-const int img_size=4096;
-const double max_bl=2640;
-const double max_freq=200E6;
-const double c=2.99792458E8;
-const double max_uv=max_bl/(c/max_freq);
-int main(int argc,char* argv[])
+const double pi = atan (1) * 4;
+const int img_size = 4096;
+const double max_bl = 2640;
+const double max_freq = 200E6;
+const double c = 2.99792458E8;
+const double max_uv = max_bl / (c / max_freq);
+int main (int argc, char *argv[])
 {
-  if(argc!=4)
-    {
-      std::cerr<<"Usage:"<<argv[0]<<" <ms table> <outfile> <column>"<<endl;
-      return -1;
-    }
-  
-  MeasurementSet mstab(argv[1],TableLock(TableLock::AutoNoReadLocking));
-  
-  cout<<mstab.nrow()<<std::endl;
+    if (argc != 4)
+        {
+            std::cerr << "Usage:" << argv[0] << " <ms table> <outfile> <column>" << endl;
+            return -1;
+        }
 
-  ROMSColumns columns(mstab);
+    MeasurementSet mstab (argv[1], TableLock (TableLock::AutoNoReadLocking));
 
-  const ROArrayColumn< Double > & uvw_column(columns.uvw());
+    cout << mstab.nrow () << std::endl;
 
-  const ROMSDataDescColumns& desc(columns.dataDescription());
+    ROMSColumns columns (mstab);
 
-  const ROScalarColumn< Int >& spwId(desc.spectralWindowId());
+    const ROArrayColumn<Double> &uvw_column (columns.uvw ());
 
-  const ROMSSpWindowColumns& spw(columns.spectralWindow());
+    const ROMSDataDescColumns &desc (columns.dataDescription ());
 
-  const ROArrayColumn< Double >& chan_freq_column(spw.chanFreq());
+    const ROScalarColumn<Int> &spwId (desc.spectralWindowId ());
 
-  const ROScalarColumn<Int>& descID(columns.dataDescId());
+    const ROMSSpWindowColumns &spw (columns.spectralWindow ());
 
-  const ROArrayColumn< Bool >& flag_column(columns.flag());
+    const ROArrayColumn<Double> &chan_freq_column (spw.chanFreq ());
 
-  auto ant1_column(columns.antenna1());
-  auto ant2_column(columns.antenna2());
-  //cout<<descID.nrow()<<endl;
+    const ROScalarColumn<Int> &descID (columns.dataDescId ());
 
-  //const Vector<Double> v(uvw.get(100000));
-  //const ROArrayColumn< Complex >& data_column(columns.data());
-  //const ROArrayColumn< Complex >& data_column(columns.correctedData());
-  //const ROArrayColumn< Complex >& data_column(columns.modelData());
-  const ArrayColumn<Complex> data_column(mstab,argv[3]);
-  //std::cout<<v<<std::endl;
+    const ROArrayColumn<Bool> &flag_column (columns.flag ());
 
-  blitz::Array<double,2> mxr(img_size,img_size);
-  blitz::Array<double,2> mxi(img_size,img_size);
-  blitz::Array<long,2> cnt(img_size,img_size);
-  mxr=0;
-  mxi=0;
-  cnt=0;
-  
+    auto ant1_column (columns.antenna1 ());
+    auto ant2_column (columns.antenna2 ());
+    // cout<<descID.nrow()<<endl;
 
-  for(int i=0;i<columns.nrow();++i)
-  //for(int i=0;i<3200*820;++i)
-    {
-      int did=descID.get(i);
-      int spwid=spwId.get(did);
-      const Vector<double> chan_freq(chan_freq_column.get(spwid));
-      const Vector<Double> uvw(uvw_column.get(i));
-      const Vector<Complex> data(data_column.get(i));
-      const Vector<Bool> flag(flag_column.get(i));
-      auto ant1=ant1_column.get(i);
-      auto ant2=ant2_column.get(i);
-      
-      //cout<<i<<endl;
-      if(i%10000==0)
-      {
-        cout<<i/(double)columns.nrow()<<" "<<chan_freq.size()<<endl;
-      }
+    // const Vector<Double> v(uvw.get(100000));
+    // const ROArrayColumn< Complex >& data_column(columns.data());
+    // const ROArrayColumn< Complex >& data_column(columns.correctedData());
+    // const ROArrayColumn< Complex >& data_column(columns.modelData());
+    const ArrayColumn<Complex> data_column (mstab, argv[3]);
+    // std::cout<<v<<std::endl;
 
-      for(int ch=0;ch<data.size();++ch)
-      {
-        //cout<<d.real()<<endl;
-        if(!flag[ch])
-          {
-            Complex d(data[ch]);
-            double freq=chan_freq[ch];
-            double lambda=c/freq;
-            double u_l=uvw[0]/lambda;
-            double v_l=uvw[1]/lambda;
-            double w_l=uvw[2]/lambda;
-            int iu=u_l/max_uv*(img_size/2)+img_size/2;
-            int iv=v_l/max_uv*(img_size/2)+img_size/2;
+    blitz::Array<double, 2> mxr (img_size, img_size);
+    blitz::Array<double, 2> mxi (img_size, img_size);
+    blitz::Array<long, 2> cnt (img_size, img_size);
+    mxr = 0;
+    mxi = 0;
+    cnt = 0;
 
-            if(iu>=0&&iu<img_size&&iv>=0&&iv<img_size && ant1!=ant2)
-            {
-              mxr(iu,iv)+=d.real();
-              //mxr(iu,iv)+=std::sin(w_l*2*3.1415926);
-              mxi(iu,iv)+=d.imag();
-              cnt(iu,iv)+=1;
-            }
-          }
-      } 
-    }
 
-  for(int i=0;i<img_size;++i)
-    {
-      for(int j=0;j<img_size;++j)
-      {
-        if(cnt(i,j)>0)
-          {
-            mxr(i,j)/=cnt(i,j);
-            mxi(i,j)/=cnt(i,j);
-          }
-      }
-    }
-  std::string prefix(argv[2]);
-  cfitsfile ff;
-  ff.create((prefix+"_r.fits").c_str());
-  ff<<mxr;
-  ff.close();
-  ff.create((prefix+"_i.fits").c_str());
-  ff<<mxi;
-  ff.close();
+    for (int i = 0; i < columns.nrow (); ++i)
+        // for(int i=0;i<3200*820;++i)
+        {
+            int did = descID.get (i);
+            int spwid = spwId.get (did);
+            const Vector<double> chan_freq (chan_freq_column.get (spwid));
+            const Vector<Double> uvw (uvw_column.get (i));
+            const Vector<Complex> data (data_column.get (i));
+            const Vector<Bool> flag (flag_column.get (i));
+            auto ant1 = ant1_column.get (i);
+            auto ant2 = ant2_column.get (i);
+
+            // cout<<i<<endl;
+            if (i % 10000 == 0)
+                {
+                    cout << i / (double)columns.nrow () << " " << chan_freq.size () << endl;
+                }
+
+            for (int ch = 0; ch < data.size (); ++ch)
+                {
+                    // cout<<d.real()<<endl;
+                    if (!flag[ch])
+                        {
+                            Complex d (data[ch]);
+                            double freq = chan_freq[ch];
+                            double lambda = c / freq;
+                            double u_l = uvw[0] / lambda;
+                            double v_l = uvw[1] / lambda;
+                            double w_l = uvw[2] / lambda;
+                            int iu = u_l / max_uv * (img_size / 2) + img_size / 2;
+                            int iv = v_l / max_uv * (img_size / 2) + img_size / 2;
+
+                            if (iu >= 0 && iu < img_size && iv >= 0 && iv < img_size && ant1 != ant2)
+                                {
+                                    mxr (iu, iv) += d.real ();
+                                    // mxr(iu,iv)+=std::sin(w_l*2*3.1415926);
+                                    mxi (iu, iv) += d.imag ();
+                                    cnt (iu, iv) += 1;
+                                }
+                        }
+                }
+        }
+
+    for (int i = 0; i < img_size; ++i)
+        {
+            for (int j = 0; j < img_size; ++j)
+                {
+                    if (cnt (i, j) > 0)
+                        {
+                            mxr (i, j) /= cnt (i, j);
+                            mxi (i, j) /= cnt (i, j);
+                        }
+                }
+        }
+    std::string prefix (argv[2]);
+    cfitsfile ff;
+    ff.create ((prefix + "_r.fits").c_str ());
+    ff << mxr;
+    ff.close ();
+    ff.create ((prefix + "_i.fits").c_str ());
+    ff << mxi;
+    ff.close ();
 }

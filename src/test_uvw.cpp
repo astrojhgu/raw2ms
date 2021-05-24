@@ -27,30 +27,27 @@
 using namespace std;
 using namespace casacore;
 using namespace ulastai;
-const double pi=atan(1)*4;
-int main(int argc,char* argv[])
+const double pi = atan (1) * 4;
+int main (int argc, char *argv[])
 {
-  std::vector<double> ant1_pos{2225079.88002 , -5440041.37753 , -2481724.59803};
-  std::vector<double> ant2_pos{2224981.09778 , -5440131.25039 , -2481621.06637};
-  
-  
-  std::vector<double> bl_coord;
-  for(int i=0;i<3;++i)
-    {
-      bl_coord.push_back(ant2_pos[i]-ant1_pos[i]);
-    }
-  MBaseline bl(MVBaseline(MVPosition(bl_coord[0],
-				     bl_coord[1],
-				     bl_coord[2])),
-	       MBaseline::ITRF);
-  
-  
-  double current_time=4860027420.0;
-  double ra=1.40920681045;
-  double dec=-0.636322083578;
-  casacore::Vector<double> uvw(mscreate::calc_uvw(bl,current_time,ra,dec));
-  double u=uvw(0);
-  double v=uvw(1);
-  double w=uvw(2);
-  cout<<u<<" "<<v<<" "<<w<<endl;
+    std::vector<double> ant1_pos{ 2225079.88002, -5440041.37753, -2481724.59803 };
+    std::vector<double> ant2_pos{ 2224981.09778, -5440131.25039, -2481621.06637 };
+
+
+    std::vector<double> bl_coord;
+    for (int i = 0; i < 3; ++i)
+        {
+            bl_coord.push_back (ant2_pos[i] - ant1_pos[i]);
+        }
+    MBaseline bl (MVBaseline (MVPosition (bl_coord[0], bl_coord[1], bl_coord[2])), MBaseline::ITRF);
+
+
+    double current_time = 4860027420.0;
+    double ra = 1.40920681045;
+    double dec = -0.636322083578;
+    casacore::Vector<double> uvw (mscreate::calc_uvw (bl, current_time, ra, dec));
+    double u = uvw (0);
+    double v = uvw (1);
+    double w = uvw (2);
+    cout << u << " " << v << " " << w << endl;
 }
