@@ -24,7 +24,7 @@ flagmanager(vis=vis,mode="restore",versionname=flagversion,oldname="",comment=""
 img_prefix=vis_prefix+"_img"
 model=img_prefix+".model"
 
-ft(vis=vis,field="",spw="",model=model,nterms=1,reffreq="",complist="",incremental=False,usescratch=True)
+#ft(vis=vis,field="",spw="",model=model,nterms=1,reffreq="",complist="",incremental=False,usescratch=True)
 
 
 caltable=vis_prefix+".cal"
