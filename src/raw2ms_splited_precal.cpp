@@ -355,7 +355,10 @@ int main (int argc, char **argv)
     std::string date (argv[5]);
     std::string input_path (argv[6]);
 
-
+    Table ant_tab (antenna_tab_name, TableLock (TableLock::AutoNoReadLocking));
+    ROScalarColumn<String> antNameCol (ant_tab, "NAME");
+    Array<String> antNames (antNameCol.getColumn ());
+    size_t nantennas=antNames.size();
     std::vector<std::vector<std::vector<std::complex<float>>>> gain_vec (nchannels);
     for (int i = 2048; i < nchannels; ++i)
         {
@@ -412,7 +415,7 @@ int main (int argc, char **argv)
             assert (chlimits.back ().first >= 2048 && chlimits.back ().second <= 8192);
         }
 
-    Table ant_tab (antenna_tab_name, TableLock (TableLock::AutoNoReadLocking));
+    
 
     ROArrayColumn<double> pos_col (ant_tab, "POSITION");
     Array<double> its_ant_pos (pos_col.getColumn ());
@@ -458,8 +461,7 @@ int main (int argc, char **argv)
     casacore::MPosition array_pos (casacore::MVPosition (mx, my, mz), MPosition::ITRF);
 
 
-    ROScalarColumn<String> antNameCol (ant_tab, "NAME");
-    Array<String> antNames (antNameCol.getColumn ());
+    
     std::vector<std::string> antNameVec;
     std::map<std::string, double> ant_delay;
 

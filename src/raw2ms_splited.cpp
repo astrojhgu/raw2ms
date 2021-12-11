@@ -75,9 +75,12 @@ class visb_by_baseline_source : public raw_data_source
             {
                 for (int j = i; j < nantennas; ++j)
                     {
+		      
                         baseline_nodes.push_back ({ i, j });
+			auto fname=data_path + "/" + antenna_names[i] + antenna_names[j] + "-0-" + date + ".bin";
+			std::cerr<<fname<<std::endl;
                         files.push_back (std::shared_ptr<std::ifstream> (new ifstream (
-                        data_path + "/" + antenna_names[i] + antenna_names[j] + "-0-" + date + ".bin")));
+                        fname)));
                         assert (files.back ()->is_open ());
                     }
             }
@@ -243,7 +246,8 @@ int main (int argc, char **argv)
     Array<String> antNames (antNameCol.getColumn ());
     std::vector<std::string> antNameVec;
 
-    for (int i = 0; i < 40; ++i)
+
+    for (int i = 0; i < antNames.size(); ++i)
         {
             antNameVec.push_back (antNames (IPosition (2, i, 0)));
             std::cout << antNameVec.back () << std::endl;

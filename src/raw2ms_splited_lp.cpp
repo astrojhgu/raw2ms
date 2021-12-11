@@ -266,7 +266,7 @@ int main (int argc, char **argv)
             ant_delay[ant] = dl;
         }
     std::vector<double> delay_vec;
-    for (int i = 0; i < 40; ++i)
+    for (int i = 0; i < antNames.size(); ++i)  
         {
             antNameVec.push_back (antNames (IPosition (2, i, 0)));
             auto i1 = ant_delay.find (antNameVec.back ());

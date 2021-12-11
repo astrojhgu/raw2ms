@@ -218,7 +218,7 @@ int main (int argc, char **argv)
     Array<String> antNames (antNameCol.getColumn ());
     std::vector<std::string> antNameVec;
 
-    for (int i = 0; i < 40; ++i)
+    for (int i = 0; i < antNames.size(); ++i)
         {
             antNameVec.push_back (antNames (IPosition (2, i, 0)));
             std::cout << antNameVec.back () << std::endl;
